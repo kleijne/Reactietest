@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<title>Reactietest Startlichten</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap">
+<style>
+/* Layout: één scherm — kop met rondes, grote tikvlakte (startportaal), meetstrook eronder. Bewust één donker uiterlijk (pitlane-gantry). */
+:root {
+  --bg: #141516;
+  --panel: #1E2022;
+  --line: #34383B;
+  --fg: #ECEEEF;
+  --muted: #9AA1A6;
+  --red: #E8322B;
+  --red-off: #3A1B1A;
+  --green: #35D07F;
+  --accent: #DF7931;
+  --display: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --body: "Barlow", "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; min-height: 100%; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-weight: 800; font-size: 1.9rem; letter-spacing: .02em; margin: 0; text-transform: uppercase; }
+.tabs { display: flex; gap: 6px; }
+.tab {
+  font: 600 .95rem var(--body); color: var(--muted); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer;
+}
+.tab[aria-selected="true"] { color: var(--bg); background: var(--fg); border-color: var(--fg); }
+.tab:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.uitleg { color: var(--muted); margin: 0; line-height: 1.45; }
+.stage {
+  position: relative; flex: 1; min-height: 340px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; cursor: pointer;
+  touch-action: manipulation; overflow: hidden; padding: 16px;
+}
+.gantry { display: flex; gap: clamp(8px, 2.5vw, 18px); padding: 14px clamp(10px, 3vw, 22px); background: #0B0C0D; border-radius: 12px; }
+.pod { display: flex; flex-direction: column; gap: 8px; }
+.lamp { width: clamp(34px, 10vw, 62px); aspect-ratio: 1; border-radius: 50%; background: var(--red-off); max-width: 100%; }
+.lamp.on { background: var(--red); box-shadow: 0 0 22px rgba(232,50,43,.75); }
+.halves { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; }
+.half { display: flex; align-items: center; justify-content: center; }
+.half + .half { border-left: 1px dashed var(--line); }
+.target { width: 38%; max-width: 160px; aspect-ratio: 1; border-radius: 50%; background: var(--green); box-shadow: 0 0 34px rgba(53,208,127,.6); }
+.msg { font-family: var(--display); font-weight: 800; font-size: clamp(1.8rem, 7vw, 3rem); text-transform: uppercase; text-align: center; margin: 0; position: relative; }
+.sub { color: var(--muted); text-align: center; margin: 0; position: relative; }
+.big { font-family: var(--display); font-weight: 800; font-size: clamp(3rem, 14vw, 5.5rem); font-variant-numeric: tabular-nums; position: relative; }
+.big small { font-size: .4em; color: var(--muted); margin-left: 4px; }
+.strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.card h2 { font: 600 .78rem var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.tries { display: flex; gap: 6px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+.try { background: #2A2D30; border-radius: 6px; padding: 3px 7px; font-size: .95rem; }
+.try.oef { color: var(--muted); font-style: italic; }
+.stat { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; padding: 2px 0; }
+.stat b { font-weight: 600; }
+.reset { font: 600 .9rem var(--body); color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; cursor: pointer; justify-self: start; }
+.note { color: var(--muted); font-size: .85rem; line-height: 1.4; margin: 0; }
+@media (prefers-reduced-motion: reduce) { .lamp.on, .target { box-shadow: none; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Reactietest</h1>
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tabA" role="tab" aria-selected="true">A · Startlichten</button>
+      <button class="tab" id="tabB" role="tab" aria-selected="false">B · Links of rechts</button>
+    </div>
+  </header>
+  <p class="uitleg" id="uitleg"></p>
+
+  <div class="stage" id="stage" tabindex="0" aria-live="polite"></div>
+
+  <div class="strip">
+    <div class="card"><h2>Ronde A · enkelvoudig</h2><div class="tries" id="triesA"></div></div>
+    <div class="card"><h2>Ronde B · met keuze</h2><div class="tries" id="triesB"></div></div>
+    <div class="card"><h2>Uitslag</h2><div id="stats"></div></div>
+  </div>
+  <button class="reset" id="reset">Alles opnieuw</button>
+  <p class="note">Eerst één oefenpoging, daarna vijf metingen per ronde. Vergelijk je tijden vooral met jezelf op dezelfde telefoon: elk scherm voegt een eigen vertraging toe.</p>
+</div>
+
+<script>
+(() => {
+  const N = 5;                       // metingen per ronde (na 1 oefenpoging)
+  const stage = document.getElementById('stage');
+  const uitleg = document.getElementById('uitleg');
+  const data = { A: [], B: [] };     // {ms, oef}
+  const fouten = { A: 0, B: 0 };
+  let mode = 'A', state = 'idle', t0 = 0, timers = [], side = null;
+
+  const TEKST = {
+    A: 'Vijf rode lampen gaan één voor één aan. Gaan ze allemaal uit? Tik zo snel mogelijk ergens op het scherm.',
+    B: 'Wacht tot er links of rechts een groene lamp verschijnt. Tik zo snel mogelijk op die kant van het scherm.'
+  };
+
+  const clear = () => { timers.forEach(clearTimeout); timers = []; };
+  const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const metingen = m => data[m].filter(d => !d.oef).map(d => d.ms);
+  const klaar = m => metingen(m).length >= N;
+
+  function gantry(nOn) {
+    let h = '<div class="gantry">';
+    for (let i = 0; i < 5; i++) h += `<div class="pod"><div class="lamp ${i < nOn ? 'on' : ''}"></div><div class="lamp ${i < nOn ? 'on' : ''}"></div></div>`;
+    return h + '</div>';
+  }
+  function poging() {
+    const n = data[mode].length;
+    return n === 0 ? 'Oefenpoging' : `Meting ${Math.min(n, N)} van ${N}`;
+  }
+
+  function idle(extra) {
+    state = 'idle'; clear();
+    if (klaar(mode)) {
+      stage.innerHTML = (mode === 'A' ? gantry(0) : '') +
+        `<p class="msg">Ronde ${mode} klaar</p><p class="sub">${mode === 'A' ? 'Ga verder met ronde B bovenaan.' : 'Bekijk je uitslag hieronder.'}</p>`;
+      return;
+    }
+    stage.innerHTML = (extra || '') + (mode === 'A' ? gantry(0) : '') +
+      `<p class="msg">Tik om te starten</p><p class="sub">${poging()}</p>`;
+  }
+
+  function startA() {
+    state = 'arming'; stage.innerHTML = gantry(0) + `<p class="sub">${poging()} · wacht…</p>`;
+    let n = 0;
+    const step = () => {
+      n++; stage.querySelector('.gantry').outerHTML = gantry(n);
+      if (n < 5) later(step, 1000);
+      else later(lightsOut, rand(700, 3000));
+    };
+    later(step, 800);
+  }
+  function lightsOut() {
+    stage.querySelector('.gantry').outerHTML = gantry(0);
+    go();
+  }
+  function startB() {
+    state = 'arming';
+    stage.innerHTML = `<div class="halves"><div class="half"></div><div class="half"></div></div><p class="sub">${poging()} · wacht…</p>`;
+    later(() => {
+      side = Math.random() < .5 ? 0 : 1;
+      stage.querySelectorAll('.half')[side].innerHTML = '<div class="target"></div>';
+      stage.querySelector('.sub').textContent = '';
+      go();
+    }, rand(1200, 3500));
+  }
+  function go() {
+    // tijd starten op het eerstvolgende schermbeeld waarin de verandering zichtbaar is
+    requestAnimationFrame(() => requestAnimationFrame(ts => { t0 = ts; state = 'go'; }));
+    state = 'pending';
+  }
+
+  function tap(ev) {
+    const now = ev.timeStamp || performance.now();
+    if (state === 'idle') { if (!klaar(mode)) (mode === 'A' ? startA : startB)(); return; }
+    if (state === 'arming' || state === 'pending') {
+      fouten[mode]++; render();
+      idle(`<p class="msg" style="color:var(--red)">Te vroeg!</p>`); return;
+    }
+    if (state === 'go') {
+      const ms = Math.round(now - t0);
+      if (mode === 'B') {
+        const r = stage.getBoundingClientRect();
+        const tapSide = (ev.clientX - r.left) < r.width / 2 ? 0 : 1;
+        if (tapSide !== side) {
+          fouten.B++; render();
+          idle(`<p class="msg" style="color:var(--red)">Verkeerde kant</p>`); return;
+        }
+      }
+      const oef = data[mode].length === 0;
+      data[mode].push({ ms, oef });
+      render();
+      state = 'shown'; clear();
+      stage.innerHTML = `<div class="big">${ms}<small>ms</small></div><p class="sub">${oef ? 'Oefenpoging — telt niet mee' : 'Tik voor de volgende'}</p>`;
+      later(() => { if (state === 'shown') idle(); }, 900);
+    }
+  }
+
+  function stats(arr) {
+    if (!arr.length) return null;
+    const gem = arr.reduce((a, b) => a + b, 0) / arr.length;
+    return { gem: Math.round(gem), min: Math.min(...arr), spr: Math.max(...arr) - Math.min(...arr) };
+  }
+  function render() {
+    for (const m of ['A', 'B']) {
+      const el = document.getElementById('tries' + m);
+      el.innerHTML = data[m].length ? data[m].map(d => `<span class="try ${d.oef ? 'oef' : ''}">${d.ms}</span>`).join('')
+        : '<span class="note">Nog geen pogingen</span>';
+    }
+    const a = stats(metingen('A')), b = stats(metingen('B'));
+    let h = '';
+    const rij = (k, v) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`;
+    if (a) h += rij('A gemiddeld', a.gem + ' ms') + rij('A spreiding', a.spr + ' ms');
+    if (b) h += rij('B gemiddeld', b.gem + ' ms') + rij('B spreiding', b.spr + ' ms');
+    if (a && b) h += rij('Keuze kost je', (b.gem - a.gem) + ' ms');
+    if (fouten.A || fouten.B) h += rij('Te vroeg / fout', `A ${fouten.A} · B ${fouten.B}`);
+    document.getElementById('stats').innerHTML = h || '<span class="note">Verschijnt na je eerste meting</span>';
+  }
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('tabA').setAttribute('aria-selected', m === 'A');
+    document.getElementById('tabB').setAttribute('aria-selected', m === 'B');
+    uitleg.textContent = TEKST[m];
+    idle();
+  }
+
+  stage.addEventListener('pointerdown', ev => { ev.preventDefault(); tap(ev); });
+  stage.addEventListener('keydown', ev => { if (ev.key === ' ' || ev.key === 'Enter') { ev.preventDefault(); tap({ timeStamp: performance.now(), clientX: 0 }); } });
+  document.getElementById('tabA').onclick = () => setMode('A');
+  document.getElementById('tabB').onclick = () => setMode('B');
+  document.getElementById('reset').onclick = () => { data.A = []; data.B = []; fouten.A = fouten.B = 0; render(); setMode(mode); };
+
+  render(); setMode('A');
+})();
+</script>
+
+</body>
+</html>
